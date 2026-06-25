@@ -171,7 +171,7 @@ def preprocess_dataset():
     y_encoded = encoder.fit_transform(y)
     
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y_encoded, test_split=TEST_SIZE, random_state=RANDOM_STATE, stratify=y_encoded
+        X, y_encoded, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=y_encoded
     )
     
     feature_names = X_train.columns.tolist()
