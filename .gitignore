@@ -16,3 +16,5 @@ artifacts/*.csv
 
 .env
 .DS_Store
+
+mlruns/
