@@ -8,7 +8,8 @@ from sklearn.preprocessing import LabelEncoder
 
 RANDOM_STATE = 42
 TEST_SIZE = 0.2
-MAX_SAMPLES_PER_CLASS = 15000
+MAX_SAMPLES_ATTACK = 15000
+MAX_SAMPLES_BENIGN = 250000  # Increased to keep normal background noise
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
@@ -34,8 +35,13 @@ ATTACK_GROUPS = {
     "Web Attack - Sql Injection": "WebAttack",
 }
 
-# Adjusted to match the exact repository name for Web Attacks isolation
 HELD_OUT_FILE = "Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX.csv"
+
+# Identifiers that cause data leakage
+IDENTIFIER_COLS = [
+    "flow id", "source ip", "src ip", "source port", "src port",
+    "destination ip", "dst ip", "destination port", "dst port", "timestamp"
+]
 
 def ensure_directories():
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
@@ -64,6 +70,12 @@ def normalize_columns(df):
     df.columns = df.columns.astype(str).str.strip().str.replace(r"\s+", " ", regex=True)
     return df
 
+def drop_identifiers(df):
+    """Drop columns that can cause the model to memorize specific attacks."""
+    cols_to_drop = [c for c in df.columns if c.lower() in IDENTIFIER_COLS]
+    print(f"Dropping identifier columns to prevent leakage: {cols_to_drop}")
+    return df.drop(columns=cols_to_drop)
+
 def find_label_column(df):
     for col in df.columns:
         if col.lower() == "label":
@@ -81,8 +93,11 @@ def clean_numeric_features(df):
         if df[col].dtype == "object":
             df[col] = pd.to_numeric(df[col], errors="coerce")
     df = df.replace([np.inf, -np.inf], np.nan)
-    df = df.apply(lambda x: x.fillna(x.median()) if x.isnull().any() else x)
-    return df
+    
+    # Calculate and save medians for imputation
+    medians = df.median(numeric_only=True)
+    df = df.fillna(medians)
+    return df, medians
 
 def remove_invalid_rows(X, y):
     keep_mask = ~(X.isnull().any(axis=1) | y.isnull())
@@ -104,20 +119,22 @@ def cap_classes(X, y):
     
     capped_chunks = []
     for cls, group in combined.groupby(label_col):
-        if len(group) > MAX_SAMPLES_PER_CLASS:
-            group = group.sample(n=MAX_SAMPLES_PER_CLASS, random_state=RANDOM_STATE)
+        limit = MAX_SAMPLES_BENIGN if cls == "BENIGN" else MAX_SAMPLES_ATTACK
+        if len(group) > limit:
+            group = group.sample(n=limit, random_state=RANDOM_STATE)
         capped_chunks.append(group)
         
     final_df = pd.concat(capped_chunks, ignore_index=True)
     return final_df.drop(columns=[label_col]), final_df[label_col]
 
-def save_outputs(X_train, X_test, y_train, y_test, encoder, feature_names, metadata):
+def save_outputs(X_train, X_test, y_train, y_test, encoder, feature_names, medians, metadata):
     joblib.dump(X_train, PROCESSED_DIR / "X_train.joblib")
     joblib.dump(X_test, PROCESSED_DIR / "X_test.joblib")
     joblib.dump(y_train, PROCESSED_DIR / "y_train.joblib")
     joblib.dump(y_test, PROCESSED_DIR / "y_test.joblib")
     joblib.dump(encoder, MODELS_DIR / "label_encoder.joblib")
     joblib.dump(feature_names, MODELS_DIR / "feature_names.joblib")
+    joblib.dump(medians, MODELS_DIR / "feature_medians.joblib")
     
     with open(ARTIFACTS_DIR / "preprocessing_metadata.json", "w") as f:
         json.dump(metadata, f, indent=4)
@@ -135,12 +152,13 @@ def preprocess_dataset():
     ensure_directories()
     df = load_all_days_data(RAW_DATA_DIR)
     df = normalize_columns(df)
-    label_col = find_label_column(df)
+    df = drop_identifiers(df)
     
+    label_col = find_label_column(df)
     y = normalize_labels(df[label_col])
     X = df.drop(columns=[label_col])
     
-    X = clean_numeric_features(X)
+    X, medians = clean_numeric_features(X)
     X, y = remove_invalid_rows(X, y)
     X, y = remove_duplicate_rows(X, y)
     X, removed_columns = remove_constant_columns(X)
@@ -166,7 +184,7 @@ def preprocess_dataset():
         "held_out_file_identity": HELD_OUT_FILE
     }
     
-    save_outputs(X_train, X_test, y_train, y_test, encoder, feature_names, metadata)
+    save_outputs(X_train, X_test, y_train, y_test, encoder, feature_names, medians, metadata)
     generate_held_out_demo_sample()
     print("Stage 2 Preprocessing Completed Successfully.")
 
