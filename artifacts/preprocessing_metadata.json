@@ -1,37 +1,34 @@
 {
-    "random_state": 42,
-    "test_size": 0.2,
-    "max_samples_per_class": 10000,
-    "min_samples_per_class": 2,
-    "features": 68,
-    "removed_columns": [
-        "Bwd Avg Bulk Rate",
-        "Bwd Avg Bytes/Bulk",
-        "Bwd Avg Packets/Bulk",
+    "features_after_preprocessing": 69,
+    "removed_constant_columns": [
         "Bwd PSH Flags",
         "Bwd URG Flags",
-        "CWE Flag Count",
-        "Fwd Avg Bulk Rate",
         "Fwd Avg Bytes/Bulk",
         "Fwd Avg Packets/Bulk",
-        "Fwd URG Flags"
-    ],
-    "classes": [
-        "BENIGN",
-        "Bot",
-        "DDoS",
-        "PortScan"
+        "Fwd Avg Bulk Rate",
+        "Bwd Avg Bytes/Bulk",
+        "Bwd Avg Packets/Bulk",
+        "Bwd Avg Bulk Rate"
     ],
     "class_counts_before_resampling": {
-        "BENIGN": 394777,
-        "Bot": 1948,
-        "DDoS": 128014,
-        "PortScan": 90694
+        "BENIGN": 1760924,
+        "DoS": 193748,
+        "DDoS": 128016,
+        "BruteForce": 9152,
+        "PortScan": 1958,
+        "Bot": 1441,
+        "Infiltration": 36,
+        "Heartbleed": 11
     },
     "class_counts_after_resampling": {
-        "BENIGN": 10000,
-        "Bot": 1948,
-        "DDoS": 10000,
-        "PortScan": 10000
-    }
+        "BENIGN": 250000,
+        "DDoS": 15000,
+        "DoS": 15000,
+        "BruteForce": 9152,
+        "PortScan": 1958,
+        "Bot": 1441,
+        "Infiltration": 36,
+        "Heartbleed": 11
+    },
+    "held_out_file_identity": "Thursday-WorkingHours-Morning-WebAttacks.pcap_ISCX.csv"
 }

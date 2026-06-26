@@ -1,0 +1,22 @@
+artifact_path: /content/Network-Intrusion-Detection-System-/mlruns/1/models/m-7cdf740132e247ef9e8393c7b611a395/artifacts
+flavors:
+  python_function:
+    data: model.ubj
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.xgboost
+    python_version: 3.12.13
+  xgboost:
+    code: null
+    data: model.ubj
+    model_class: xgboost.sklearn.XGBClassifier
+    model_format: ubj
+    xgb_version: 3.2.0
+mlflow_version: 3.14.0
+model_id: m-7cdf740132e247ef9e8393c7b611a395
+model_size_bytes: 1635909
+model_uuid: m-7cdf740132e247ef9e8393c7b611a395
+prompts: null
+run_id: 08c404e966b64332b848cd1dab4aae9a
+utc_time_created: '2026-06-25 17:54:10.618226'

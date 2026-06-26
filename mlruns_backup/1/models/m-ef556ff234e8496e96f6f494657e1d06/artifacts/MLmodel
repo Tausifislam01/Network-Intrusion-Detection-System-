@@ -1,0 +1,23 @@
+artifact_path: /content/Network-Intrusion-Detection-System-/mlruns/1/models/m-ef556ff234e8496e96f6f494657e1d06/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.skops
+    predict_fn: predict
+    python_version: 3.12.13
+  sklearn:
+    code: null
+    pickled_model: model.skops
+    serialization_format: skops
+    sklearn_version: 1.6.1
+    skops_trusted_types: null
+mlflow_version: 3.14.0
+model_id: m-ef556ff234e8496e96f6f494657e1d06
+model_size_bytes: 7181129
+model_uuid: m-ef556ff234e8496e96f6f494657e1d06
+prompts: null
+run_id: 45d9f349f8784436b3fb8f55dfb18f52
+utc_time_created: '2026-06-25 17:53:46.898107'

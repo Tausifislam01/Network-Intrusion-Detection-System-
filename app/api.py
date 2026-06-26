@@ -1,19 +1,18 @@
 from io import StringIO
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import JSONResponse
 
 from src.inference import predict_dataframe
 
-
 app = FastAPI(
     title="Network Intrusion Detection System API",
     description="FastAPI backend for CICIDS2017 intrusion detection predictions.",
     version="1.0.0",
 )
-
 
 @app.get("/")
 def root():
@@ -23,14 +22,12 @@ def root():
         "prediction_endpoint": "/predict",
     }
 
-
 @app.get("/health")
 def health_check():
     return {
         "status": "healthy",
         "model": "xgboost_model",
     }
-
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
@@ -51,7 +48,12 @@ async def predict(file: UploadFile = File(...)):
                 detail="Uploaded CSV is empty.",
             )
 
+        # Get predictions
         predictions = predict_dataframe(df)
+
+        # --- FIX: Convert Infinity and NaN to a JSON-compliant format ---
+        predictions = predictions.replace([np.inf, -np.inf], np.nan).fillna("N/A")
+        # ----------------------------------------------------------------
 
         preview = predictions.head(100).to_dict(orient="records")
         prediction_counts = predictions["prediction"].value_counts().to_dict()
@@ -65,12 +67,6 @@ async def predict(file: UploadFile = File(...)):
         }
 
         return JSONResponse(content=response)
-
-    except HTTPException:
-        raise
-
-    except Exception as error:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Prediction failed: {str(error)}",
-        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
